@@ -26,6 +26,7 @@ def collect_samples(pid, queue, env, policy, custom_reward,
     max_c_reward = -1e6
     num_episodes = 0
     hist_maxheight = []
+    hist_pose = []
 
     while num_steps < min_batch_size:
         state = env.reset()
@@ -33,7 +34,7 @@ def collect_samples(pid, queue, env, policy, custom_reward,
             state = running_state(state)
         reward_episode = 0
         max_height = 0
-        hist_pose = []
+        episode_pose = []
 
         for t in range(10000):
             state_var = tensor(state).unsqueeze(0)
@@ -63,10 +64,12 @@ def collect_samples(pid, queue, env, policy, custom_reward,
                 env.render()
 
             max_height = info.get('max-height') if info.get('max-height') > max_height else max_height
-            hist_pose.append(info.get('pos'))
+            episode_pose.append(info.get('pos'))
             if done:
                 hist_maxheight.append(max_height)
                 max_height = 0
+                hist_pose.append(episode_pose)
+                episode_pose = []
 
             if done:
                 break

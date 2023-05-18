@@ -25,12 +25,15 @@ def collect_samples(pid, queue, env, policy, custom_reward,
     min_c_reward = 1e6
     max_c_reward = -1e6
     num_episodes = 0
+    hist_maxheight = []
 
     while num_steps < min_batch_size:
         state = env.reset()
         if running_state is not None:
             state = running_state(state)
         reward_episode = 0
+        max_height = 0
+        hist_pose = []
 
         for t in range(10000):
             state_var = tensor(state).unsqueeze(0)
@@ -40,11 +43,7 @@ def collect_samples(pid, queue, env, policy, custom_reward,
                 else:
                     action = policy.select_action(state_var)[0].numpy()
             action = int(action) if policy.is_disc_action else action.astype(np.float64)
-            # try:
-                # print("action: " + str(action))
-            next_state, reward, done, _ = env.step(action)
-            # except:
-                # print('We have a problem???')
+            next_state, reward, done, info = env.step(action)
 
             reward_episode += reward
             if running_state is not None:
@@ -62,10 +61,18 @@ def collect_samples(pid, queue, env, policy, custom_reward,
 
             if render:
                 env.render()
+
+            max_height = info.get('max-height') if info.get('max-height') > max_height else max_height
+            hist_pose.append(info.get('pos'))
+            if done:
+                hist_maxheight.append(max_height)
+                max_height = 0
+
             if done:
                 break
 
             state = next_state
+
 
         # log stats
         num_steps += (t + 1)
@@ -80,6 +87,8 @@ def collect_samples(pid, queue, env, policy, custom_reward,
     log['avg_reward'] = total_reward / num_episodes
     log['max_reward'] = max_reward
     log['min_reward'] = min_reward
+    log['max_height'] = hist_maxheight
+    log['hist_pos'] = hist_pose
     if custom_reward is not None:
         log['total_c_reward'] = total_c_reward
         log['avg_c_reward'] = total_c_reward / num_steps

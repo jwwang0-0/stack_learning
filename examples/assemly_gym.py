@@ -13,16 +13,23 @@ from core.common import estimate_advantages
 from core.agent import Agent
 import assembly_gymenv
 
+import pandas as pd
+import numpy as np
+
+
+HERE = os.path.dirname(__file__)
+DATA_PATH = os.path.join(HERE, "../", "data/")
+
 
 min_batch_size = 128
 eval_batch_size = 32
 max_iter_num = 2000
-log_interval = 32
+log_interval = 8
 
 parser = argparse.ArgumentParser(description='PyTorch A2C example')
 parser.add_argument('--log-std', type=float, default=-0.0, metavar='G',
                     help='log std for the policy (default: -0.0)')
-parser.add_argument('--gamma', type=float, default=0.99, metavar='G',
+parser.add_argument('--gamma', type=float, default=0.9, metavar='G',
                     help='discount factor (default: 0.99)')
 parser.add_argument('--tau', type=float, default=0.95, metavar='G',
                     help='gae (default: 0.95)')
@@ -83,15 +90,30 @@ def update_params(batch):
 
 def main():
 
+    hist_reward = []
+    hist_maxheight = []
+    hist_pos = []
+
     for i_iter in range(max_iter_num):
 
         """generate multiple trajectories that reach the minimum batch_size"""
         batch, log = agent.collect_samples(min_batch_size, render=False)
+
         t0 = time.time()
         update_params(batch)
         t1 = time.time()
 
-        # if i_iter % log_interval == 0:
+        hist_reward.append({'avg': log.get('avg_reward'),
+                            'min': log.get('min_reward'),
+                            'max': log.get('max_reward'),
+                            })
+        hist_maxheight.append(log.get('max_height'))
+        hist_pos.append(log.get('hist_pos'))
+
+        if i_iter % log_interval == 0:
+            pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')
+            pd.Series(hist_maxheight).to_csv(DATA_PATH + 'height.csv', mode='a')
+            pd.Series(hist_pos).to_csv(DATA_PATH + 'pose.csv', mode='a')
 
         #     """evaluate with determinstic action (remove noise for exploration)"""
         #     _, log_eval = agent.collect_samples(eval_batch_size, mean_action=True)

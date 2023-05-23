@@ -128,6 +128,9 @@ def main_loop():
             pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')
             pd.Series(hist_maxheight).to_csv(DATA_PATH + 'height.csv', mode='a')
             pd.Series(hist_pos).to_csv(DATA_PATH + 'pose.csv', mode='a')
+            hist_reward = []
+            hist_maxheight = []
+            hist_pos = []
             print('{}\tT_sample {:.4f}\tT_update {:.4f}\tT_eval {:.4f}\ttrain_R_min {:.2f}\ttrain_R_max {:.2f}\ttrain_R_avg {:.2f}\teval_R_avg {:.2f}'.format(
                 i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
 

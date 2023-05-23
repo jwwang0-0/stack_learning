@@ -6,7 +6,7 @@ from utils.math import *
 feature_dim = 32
 
 
-class RnnAC(nn.Module):
+class RnnValueNet(nn.Module):
     def __init__(self, action_dim, activation='tanh', log_std=0):
         super().__init__()
 
@@ -33,8 +33,6 @@ class RnnAC(nn.Module):
             )
         
         self.value_head = nn.Linear(self.linear_dim, 1)
-        self.value_head.weight.data.mul_(0.1)
-        self.value_head.bias.data.mul_(0.0)
 
 
     def forward(self, batch_seq):
@@ -52,17 +50,9 @@ class RnnAC(nn.Module):
         
         # unpack the featrue vector
         out, lens_unpacked = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
-        out = out.view(b, s, self.num_dir, self.hidden_size[0])
+        out = out.view(b, s, 1, -1)
 
-        # many-to-one rnn, get the last result
-        y = out[:, -1, 0]
-
-
-
-        y = self.out(y)
-        # return y
-
-        value = self.value_head(batch_seq)
+        value = self.value_head(out)
 
         return value
 

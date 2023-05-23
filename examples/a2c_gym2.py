@@ -121,8 +121,8 @@ def main_loop():
         hist_pos.append(log.get('hist_pos'))
 
         """evaluate with determinstic action (remove noise for exploration)"""
-        _, log_eval = agent.collect_samples(args.eval_batch_size, mean_action=True)
-        t2 = time.time()
+        # _, log_eval = agent.collect_samples(args.eval_batch_size, mean_action=True)
+        # t2 = time.time()
 
         if i_iter % args.log_interval == 0:
             pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')

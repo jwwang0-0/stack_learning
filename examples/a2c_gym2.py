@@ -41,11 +41,11 @@ parser.add_argument('--min-batch-size', type=int, default=128, metavar='N',
                     help='minimal batch size per A2C update (default: 2048)')
 parser.add_argument('--eval-batch-size', type=int, default=32, metavar='N',
                     help='minimal batch size for evaluation (default: 2048)')
-parser.add_argument('--max-iter-num', type=int, default=500, metavar='N',
+parser.add_argument('--max-iter-num', type=int, default=5000, metavar='N',
                     help='maximal number of main iterations (default: 500)')
 parser.add_argument('--log-interval', type=int, default=1, metavar='N',
                     help='interval between training status logs (default: 1)')
-parser.add_argument('--save-model-interval', type=int, default=100, metavar='N',
+parser.add_argument('--save-model-interval', type=int, default=250, metavar='N',
                     help="interval between saving model (default: 0, means don't save)")
 parser.add_argument('--gpu-index', type=int, default=0, metavar='N')
 args = parser.parse_args()

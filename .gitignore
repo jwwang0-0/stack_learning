@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 
 *.csv
+data/learned_models/

@@ -135,6 +135,7 @@ def main_loop():
                 i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
 
         if args.save_model_interval > 0 and (i_iter+1) % args.save_model_interval == 0:
+            breakpoint()
             to_device(torch.device('cpu'), policy_net, value_net)
             pickle.dump((policy_net, value_net, running_state),
                         open(os.path.join(DATA_PATH, 'learned_models/{}_a2c{}.p'.format("Assembly" , i_iter)), 'wb'))

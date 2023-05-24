@@ -48,7 +48,8 @@ device = torch.device('cpu')
 env = gym.make('assembly_gymenv/AssemblyGymEnv-v0')
 state_dim = env.observation_space.shape
 is_disc_action = len(env.action_space.shape) == 0
-running_state = ZFilter((state_dim[0], state_dim[1]), clip=5)
+running_state = None
+# running_state = ZFilter((state_dim[0], state_dim[1]), clip=5)
 # running_reward = ZFilter((1,), demean=False, clip=10)
 
 """seeding"""

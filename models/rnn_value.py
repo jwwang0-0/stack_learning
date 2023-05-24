@@ -27,13 +27,13 @@ class RnnValueNet(nn.Module):
                            batch_first=True,
                            bidirectional=False)
 
-        self.linear = nn.Sequential(
+        self.value_head = nn.Sequential(
             nn.Linear(self.rnn_feature_dim, self.linear_dim), 
-            nn.Tanh()
+            nn.Tanh(),
+            nn.Linear(self.linear_dim, 1),
+            nn.Tanh(),
             )
         
-        self.value_head = nn.Linear(self.linear_dim, 1)
-
 
     def forward(self, batch_seq):
 

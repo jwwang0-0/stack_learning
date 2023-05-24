@@ -60,18 +60,19 @@ class RnnPolicyNet(nn.Module):
         self.rnn_feature_dim = 8
         self.linear_dim = 4
 
-        self.rnn = nn.LSTM(input_size=8, 
+        self.rnn = nn.LSTM(input_size=2, 
                            hidden_size=self.rnn_feature_dim,
                            num_layers=2,
                            batch_first=True,
                            bidirectional=False)
 
-        self.linear = nn.Sequential(
+        self.action_mean = nn.Sequential(
             nn.Linear(self.rnn_feature_dim, self.linear_dim), 
-            nn.Tanh()
+            nn.Tanh(),
+            nn.Linear(self.linear_dim, action_dim),
+            nn.Tanh(),
             )
         
-        self.action_mean = nn.Linear(self.linear_dim, action_dim)
         # self.action_mean.weight.data.mul_(0.1)
         # self.action_mean.bias.data.mul_(0.0)
 
@@ -101,12 +102,12 @@ class RnnPolicyNet(nn.Module):
         return action_mean, action_log_std, action_std
 
     def select_action(self, x):
-        _, action_mean, _, action_std = self.forward(x)
+        action_mean, _, action_std = self.forward(x)
         action = torch.normal(action_mean, action_std)
         return action
 
     def get_log_prob(self, x, actions):
-        _, action_mean, action_log_std, action_std = self.forward(x)
+        action_mean, action_log_std, action_std = self.forward(x)
         return normal_log_density(actions, action_mean, action_log_std, action_std)
 
 

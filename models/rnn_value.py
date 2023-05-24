@@ -7,7 +7,7 @@ feature_dim = 32
 
 
 class RnnValueNet(nn.Module):
-    def __init__(self, action_dim, activation='tanh', log_std=0):
+    def __init__(self, action_dim, activation='tanh'):
         super().__init__()
 
         self.is_disc_action = False

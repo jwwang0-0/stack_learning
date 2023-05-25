@@ -22,7 +22,7 @@ HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 128
+min_batch_size = 32
 eval_batch_size = 32
 max_iter_num = 2000
 log_interval = 8
@@ -40,7 +40,7 @@ parser.add_argument('--save-model-interval', type=int, default=0, metavar='N',
                     help="interval between saving model (default: 0, means don't save)")
 args = parser.parse_args()
 
-dtype = torch.float64
+dtype = torch.float32
 torch.set_default_dtype(dtype)
 device = torch.device('cpu')
 
@@ -75,7 +75,8 @@ agent = Agent(env, policy_net, device, running_state=running_state, num_threads=
 
 def update_params(batch):
 
-    states = torch.from_numpy(np.stack(batch.state)).to(dtype).to(device)
+    # states = torch.from_numpy(np.stack(batch.state)).to(dtype).to(device)
+    states = [torch.from_numpy(item).to(dtype).to(device) for item in batch.state]
     actions = torch.from_numpy(np.stack(batch.action)).to(dtype).to(device)
     rewards = torch.from_numpy(np.stack(batch.reward)).to(dtype).to(device)
     masks = torch.from_numpy(np.stack(batch.mask)).to(dtype).to(device)
@@ -83,7 +84,6 @@ def update_params(batch):
     print(rewards)
 
     with torch.no_grad():
-        states = states.view((-1, 1, 1000, 1000))
         values = value_net(states)
 
     """get advantage estimation from the trajectories"""
@@ -103,7 +103,6 @@ def main():
 
         """generate multiple trajectories that reach the minimum batch_size"""
         batch, log = agent.collect_samples(min_batch_size, render=False)
-        breakpoint()
 
         t0 = time.time()
         update_params(batch)

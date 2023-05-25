@@ -3,47 +3,6 @@ import torch
 from utils.math import *
 
 
-feature_dim = 32
-
-class DeepIO(nn.Module):
-    def __init__(self):
-        super(DeepIO, self).__init__()
-        self.rnn = nn.LSTM(input_size=6, hidden_size=512,
-                           num_layers=2, bidirectional=False)
-        self.drop_out = nn.Dropout(0.25)
-        self.fc1 = nn.Linear(512, 256)
-        self.bn1 = nn.BatchNorm1d(256)
-        self.fc_out = nn.Linear(256, 7)
-
-    def forward(self, x):
-        """
-        args:
-        x:  a list of inputs of diemension [BxTx6]
-        """
-        lengths = [x_.size(0) for x_ in x]   # get the length of each sequence in the batch
-        x_padded = nn.utils.rnn.pad_sequence(x, batch_first=True)  # padd all sequences
-        b, s, n = x_padded.shape
-        
-        # pack padded sequece
-        x_padded = nn.utils.rnn.pack_padded_sequence(x_padded, lengths=lengths, batch_first=True, enforce_sorted=False)
-        
-        # calc the feature vector from the latent space 
-        out, hidden = self.rnn(x_padded)
-        
-        # unpack the featrue vector
-        out, lens_unpacked = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
-        out = out.view(b, s, 1, 512)
-
-        # many-to-one rnn, get the last result
-        breakpoint()
-        y = out[:, -1, 0]
-
-        y = F.relu(self.fc1(y), inplace=True)
-        y = self.bn1(y)
-        y = self.drop_out(y)
-
-        y = self.out(y)
-        return y
 
 class RnnPolicyNet(nn.Module):
     def __init__(self, action_dim, activation='tanh', log_std=0):
@@ -80,20 +39,27 @@ class RnnPolicyNet(nn.Module):
 
     def forward(self, batch_seq):
 
-        lengths = [seq.size(0) for seq in batch_seq]   # get the length of each sequence in the batch
-        seq_padded = nn.utils.rnn.pad_sequence(batch_seq, batch_first=True)  # padd all sequences
-        b, s, n = seq_padded.shape
-        
-        # pack padded sequece
-        seq_padded = nn.utils.rnn.pack_padded_sequence(
-            seq_padded, lengths=lengths, batch_first=True, enforce_sorted=False)
-        
-        # calc the feature vector from the latent space 
-        out, hidden = self.rnn(seq_padded)
-        
-        # unpack the featrue vector
-        out, lens_unpacked = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
-        out = out.view(b, s, 1, -1)
+        if type(batch_seq) is list:
+
+            lengths = [seq.size(0) for seq in batch_seq]   # get the length of each sequence in the batch
+            seq_padded = nn.utils.rnn.pad_sequence(batch_seq, batch_first=True)  # padd all sequences
+            b, s, n = seq_padded.shape
+            
+            # pack padded sequece
+            seq_padded = nn.utils.rnn.pack_padded_sequence(
+                seq_padded, lengths=lengths, batch_first=True, enforce_sorted=False)
+            
+            # calc the feature vector from the latent space 
+            out, hidden = self.rnn(seq_padded)
+            
+            # unpack the featrue vector
+            out, lens_unpacked = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
+            out = torch.stack([item[lens_unpacked[idx]-1] 
+                           for idx, item in enumerate(out)])
+
+        else:
+            out, hidden = self.rnn(batch_seq)
+            out = out[0][-1].view(1, 1 , 1, -1)
 
         action_mean = self.action_mean(out)
         action_log_std = self.action_log_std.expand_as(action_mean)

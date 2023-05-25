@@ -44,6 +44,8 @@ def collect_samples(pid, queue, env, policy, custom_reward,
                 else:
                     action = policy.select_action(state_var)[0].numpy()
             action = int(action) if policy.is_disc_action else action.astype(np.float64)
+            
+            # breakpoint()
             next_state, reward, done, info = env.step(action)
 
             reward_episode += reward

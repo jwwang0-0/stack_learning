@@ -3,8 +3,6 @@ import torch
 from utils.math import *
 
 
-feature_dim = 32
-
 
 class RnnValueNet(nn.Module):
     def __init__(self, action_dim, activation='tanh'):
@@ -21,7 +19,7 @@ class RnnValueNet(nn.Module):
         self.rnn_feature_dim = 8
         self.linear_dim = 4
 
-        self.rnn = nn.LSTM(input_size=8, 
+        self.rnn = nn.LSTM(input_size=2, 
                            hidden_size=self.rnn_feature_dim,
                            num_layers=2,
                            batch_first=True,
@@ -50,7 +48,8 @@ class RnnValueNet(nn.Module):
         
         # unpack the featrue vector
         out, lens_unpacked = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
-        out = out.view(b, s, 1, -1)
+        out = torch.stack([item[lens_unpacked[idx]-1] 
+                           for idx, item in enumerate(out)])
 
         value = self.value_head(out)
 

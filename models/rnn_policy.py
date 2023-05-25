@@ -21,14 +21,14 @@ class RnnPolicyNet(nn.Module):
 
         self.rnn = nn.LSTM(input_size=2, 
                            hidden_size=self.rnn_feature_dim,
-                           num_layers=2,
+                           num_layers=1,
                            batch_first=True,
                            bidirectional=False)
 
         self.action_mean = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, 1), 
+            nn.Linear(self.rnn_feature_dim, action_dim), 
+            # nn.ReLU(),
             # nn.Linear(self.linear_dim, action_dim),
-            # nn.Tanh(),
             )
         
         # self.action_mean.weight.data.mul_(0.1)

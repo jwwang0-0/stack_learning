@@ -66,8 +66,8 @@ value_net = RnnValueNet(env.action_space.shape[0])
 policy_net.to(device)
 value_net.to(device)
 
-optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=0.001)
-optimizer_value = torch.optim.Adam(value_net.parameters(), lr=0.001)
+optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.001)
+optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.001)
 
 """create agent"""
 agent = Agent(env, policy_net, device, running_state=running_state, num_threads=1)
@@ -80,6 +80,8 @@ def update_params(batch):
     actions = torch.from_numpy(np.stack(batch.action)).to(dtype).to(device)
     rewards = torch.from_numpy(np.stack(batch.reward)).to(dtype).to(device)
     masks = torch.from_numpy(np.stack(batch.mask)).to(dtype).to(device)
+    print("Rewards: ")
+    print(rewards)
 
     with torch.no_grad():
         values = value_net(states)

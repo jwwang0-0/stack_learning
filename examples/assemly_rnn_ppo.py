@@ -22,13 +22,13 @@ HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 64
-eval_batch_size = 32
+min_batch_size = 128
+eval_batch_size = 16
 max_iter_num = 2000
 log_interval = 4
 
 parser = argparse.ArgumentParser(description='PyTorch A2C example')
-parser.add_argument('--log-std', type=float, default=-0.0, metavar='G',
+parser.add_argument('--log-std', type=float, default=-2, metavar='G',
                     help='log std for the policy (default: -0.0)')
 parser.add_argument('--gamma', type=float, default=0.9, metavar='G',
                     help='discount factor (default: 0.99)')
@@ -55,10 +55,10 @@ running_state = None
 # running_reward = ZFilter((1,), demean=False, clip=10)
 
 """seeding"""
-seed = 2345
-np.random.seed(seed)
-torch.manual_seed(seed)
-env.seed(seed)
+# seed = 2345
+# np.random.seed(seed)
+# torch.manual_seed(seed)
+# env.seed(seed)
 
 """define actor and critic"""
 # combine the policy and value net into one
@@ -68,8 +68,8 @@ value_net = RnnValueNet(env.action_space.shape[0])
 policy_net.to(device)
 value_net.to(device)
 
-optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=0.001)
-optimizer_value = torch.optim.Adam(value_net.parameters(), lr=0.001)
+optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.001)
+optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.001)
 
 # optimization epoch number and batch size for PPO
 optim_epochs = 10
@@ -86,6 +86,8 @@ def update_params(batch):
     actions = torch.from_numpy(np.stack(batch.action)).to(dtype).to(device)
     rewards = torch.from_numpy(np.stack(batch.reward)).to(dtype).to(device)
     masks = torch.from_numpy(np.stack(batch.mask)).to(dtype).to(device)
+    print("Rewards: ")
+    print(rewards)
 
     with torch.no_grad():
         values = value_net(states)
@@ -124,7 +126,8 @@ def main():
 
         """generate multiple trajectories that reach the minimum batch_size"""
         batch, log = agent.collect_samples(min_batch_size, render=False)
-
+        breakpoint()
+        
         t0 = time.time()
         update_params(batch)
         t1 = time.time()

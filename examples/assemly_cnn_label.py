@@ -7,8 +7,9 @@ import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils import *
-from models.cnn_ac import BinaryCnnAC
-from core.a2c import assembly_a2c_step
+from models.cnn_policy import CnnLabelPolicy
+from models.cnn_value import CnnLabelValue
+from core.a2c import a2c_label_step
 from core.common import estimate_advantages
 from core.agent import Agent
 import assembly_gymenv
@@ -21,13 +22,13 @@ HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 128
-eval_batch_size = 32
+min_batch_size = 32
+eval_batch_size = 8
 max_iter_num = 2000
 log_interval = 8
 
 parser = argparse.ArgumentParser(description='PyTorch A2C example')
-parser.add_argument('--log-std', type=float, default=-0.0, metavar='G',
+parser.add_argument('--log-std', type=float, default=-2.0, metavar='G',
                     help='log std for the policy (default: -0.0)')
 parser.add_argument('--gamma', type=float, default=0.9, metavar='G',
                     help='discount factor (default: 0.99)')
@@ -39,7 +40,7 @@ parser.add_argument('--save-model-interval', type=int, default=0, metavar='N',
                     help="interval between saving model (default: 0, means don't save)")
 args = parser.parse_args()
 
-dtype = torch.float64
+dtype = torch.float32
 torch.set_default_dtype(dtype)
 device = torch.device('cpu')
 
@@ -59,19 +60,23 @@ env.seed(seed)
 
 """define actor and critic"""
 # combine the policy and value net into one
-ac_net = BinaryCnnAC(env.action_space.shape[0], log_std=args.log_std)
+policy_net = CnnLabelPolicy(env.action_space.shape[0], log_std=args.log_std)
+value_net = CnnLabelValue()
 
-ac_net.to(device)
+policy_net.to(device)
+value_net.to(device)
 
-optimizer = torch.optim.Adam(ac_net.parameters(), lr=0.001)
+optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.001)
+optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.001)
 
 """create agent"""
-agent = Agent(env, ac_net, device, running_state=running_state, num_threads=1)
+agent = Agent(env, policy_net, device, running_state=running_state, num_threads=1)
 
 
 def update_params(batch):
 
-    states = torch.from_numpy(np.stack(batch.state)).to(dtype).to(device)
+    state_img = [item.get('image') for item in batch.state]
+    state_img = torch.from_numpy(np.stack(state_img)).to(dtype).to(device)
     actions = torch.from_numpy(np.stack(batch.action)).to(dtype).to(device)
     rewards = torch.from_numpy(np.stack(batch.reward)).to(dtype).to(device)
     masks = torch.from_numpy(np.stack(batch.mask)).to(dtype).to(device)
@@ -79,14 +84,22 @@ def update_params(batch):
     print(rewards)
 
     with torch.no_grad():
-        states = states.view((-1, 1, 1000, 1000))
-        values, _, _, _ = ac_net(states)
+        state_img = state_img.view((-1, 1, 1000, 1000))
+        values, _ = value_net(state_img)
 
     """get advantage estimation from the trajectories"""
     advantages, returns = estimate_advantages(rewards, masks, values, args.gamma, args.tau, device)
 
+    label_img = [1 if item.get('label_instable') is True else 0 
+                 for item in batch.state]
+    label_img = torch.tensor(label_img).to(dtype)
+
     """perform TRPO update"""
-    assembly_a2c_step(ac_net, optimizer, values, states, actions, returns, advantages, args.l2_reg)
+    a2c_label_step(policy_net, value_net, 
+                   optimizer_policy, optimizer_value, 
+                   label_img, state_img, 
+                   actions, returns, advantages, args.l2_reg)
+
 
 
 def main():

@@ -37,7 +37,7 @@ def collect_samples(pid, queue, env, policy, custom_reward,
         episode_pose = []
 
         for t in range(10000):
-            state_var = tensor(state).unsqueeze(0)
+            state_var = tensor(state.get('image')).unsqueeze(0)
             with torch.no_grad():
                 if mean_action:
                     action = policy(state_var)[0].flatten()

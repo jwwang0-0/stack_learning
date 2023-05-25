@@ -41,26 +41,36 @@ class CnnLabelPolicy(nn.Module):
 
         self.action_log_std = nn.Parameter(torch.ones(1, action_dim) * log_std)
 
+        self.label_head = nn.Sequential(
+            nn.Linear(2*14*14, feature_dim), 
+            nn.Sigmoid(),
+            nn.Linear(feature_dim, 1)
+        )
+
     def forward(self, arr_img):
 
         x = self.cnn(arr_img)
         x = x.view(-1, 2*14*14)
+
         action_mean = self.action_mean(x)
         action_mean = torch.tanh(action_mean)
 
         action_log_std = self.action_log_std.expand_as(action_mean)
         action_std = torch.exp(action_log_std)
 
-        return action_mean, action_log_std, action_std
+        label = self.label_head(x)
+        label = torch.sigmoid(label)
+
+        return action_mean, action_log_std, action_std, label
 
     def select_action(self, x):
-        action_mean, _, action_std = self.forward(x)
+        action_mean, _, action_std, _ = self.forward(x)
         action = torch.normal(action_mean, action_std)
         return action
 
     def get_log_prob(self, x, actions):
-        action_mean, action_log_std, action_std = self.forward(x)
-        return normal_log_density(actions, action_mean, action_log_std, action_std)
+        action_mean, action_log_std, action_std, label = self.forward(x)
+        return normal_log_density(actions, action_mean, action_log_std, action_std), label
 
 
 

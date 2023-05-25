@@ -36,6 +36,12 @@ class CnnLabelValue(nn.Module):
             nn.Linear(feature_dim, 1)
             )
         
+        self.label_head = nn.Sequential(
+            nn.Linear(2*14*14, feature_dim), 
+            nn.Sigmoid(),
+            nn.Linear(feature_dim, 1)
+        )
+        
         # self.value_head.weight.data.mul_(0.1)
         # self.value_head.bias.data.mul_(0.0)
 
@@ -44,10 +50,14 @@ class CnnLabelValue(nn.Module):
 
         x = self.cnn(arr_img)
         x = x.view(-1, 2*14*14)
+
         value = self.value_head(x)
         value = torch.tanh(value)
         
-        return value
+        label = self.label_head(x)
+        label = torch.sigmoid(label)
+
+        return value, label
 
 
 

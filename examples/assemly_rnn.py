@@ -75,7 +75,6 @@ agent = Agent(env, policy_net, device, running_state=running_state, num_threads=
 
 def update_params(batch):
 
-    # states = torch.from_numpy(np.stack(batch.state)).to(dtype).to(device)
     states = [torch.from_numpy(item).to(dtype).to(device) for item in batch.state]
     actions = torch.from_numpy(np.stack(batch.action)).to(dtype).to(device)
     rewards = torch.from_numpy(np.stack(batch.reward)).to(dtype).to(device)

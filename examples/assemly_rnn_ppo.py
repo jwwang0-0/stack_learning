@@ -38,6 +38,8 @@ parser.add_argument('--l2-reg', type=float, default=1e-3, metavar='G',
                     help='l2 regularization regression (default: 1e-3)')
 parser.add_argument('--save-model-interval', type=int, default=0, metavar='N',
                     help="interval between saving model (default: 0, means don't save)")
+parser.add_argument('--clip-epsilon', type=float, default=0.2, metavar='N',
+                    help='clipping epsilon for PPO')
 args = parser.parse_args()
 
 dtype = torch.float32
@@ -87,24 +89,26 @@ def update_params(batch):
 
     with torch.no_grad():
         values = value_net(states)
+        fixed_log_probs = policy_net.get_log_prob(states, actions)
 
     """get advantage estimation from the trajectories"""
     advantages, returns = estimate_advantages(rewards, masks, values, args.gamma, args.tau, device)
 
     """perform mini-batch PPO update"""
-    optim_iter_num = int(math.ceil(states.shape[0] / optim_batch_size))
+    optim_iter_num = int(math.ceil(len(states) / optim_batch_size))
     for _ in range(optim_epochs):
-        perm = np.arange(states.shape[0])
+        perm = np.arange(len(states))
         np.random.shuffle(perm)
         perm = LongTensor(perm).to(device)
 
-        states, actions, returns, advantages, fixed_log_probs = \
-            states[perm].clone(), actions[perm].clone(), returns[perm].clone(), advantages[perm].clone(), fixed_log_probs[perm].clone()
+        perm_states = [states[idx] for idx in perm]
+        actions, returns, advantages, fixed_log_probs = \
+            actions[perm].clone(), returns[perm].clone(), advantages[perm].clone(), fixed_log_probs[perm].clone()
 
         for i in range(optim_iter_num):
-            ind = slice(i * optim_batch_size, min((i + 1) * optim_batch_size, states.shape[0]))
+            ind = slice(i * optim_batch_size, min((i + 1) * optim_batch_size, len(states)))
             states_b, actions_b, advantages_b, returns_b, fixed_log_probs_b = \
-                states[ind], actions[ind], advantages[ind], returns[ind], fixed_log_probs[ind]
+                perm_states[ind], actions[ind], advantages[ind], returns[ind], fixed_log_probs[ind]
 
             ppo_step(policy_net, value_net, optimizer_policy, optimizer_value, 1, states_b, actions_b, returns_b,
                      advantages_b, fixed_log_probs_b, args.clip_epsilon, args.l2_reg)

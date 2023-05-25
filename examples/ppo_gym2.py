@@ -44,7 +44,7 @@ parser.add_argument('--num-threads', type=int, default=1, metavar='N',
                     help='number of threads for agent (default: 4)')
 parser.add_argument('--seed', type=int, default=1, metavar='N',
                     help='random seed (default: 1)')
-parser.add_argument('--min-batch-size', type=int, default=512, metavar='N',
+parser.add_argument('--min-batch-size', type=int, default=256, metavar='N',
                     help='minimal batch size per PPO update (default: 2048)')
 parser.add_argument('--eval-batch-size', type=int, default=32, metavar='N',
                     help='minimal batch size for evaluation (default: 2048)')
@@ -138,6 +138,11 @@ def update_params(batch, i_iter):
 
 
 def main_loop():
+
+    hist_reward = []
+    hist_maxheight = []
+    hist_pos = []
+
     for i_iter in range(args.max_iter_num):
         """generate multiple trajectories that reach the minimum batch_size"""
         batch, log = agent.collect_samples(args.min_batch_size, render=args.render)
@@ -147,6 +152,13 @@ def main_loop():
         """evaluate with determinstic action (remove noise for exploration)"""
         _, log_eval = agent.collect_samples(args.eval_batch_size, mean_action=True)
         t2 = time.time()
+
+        hist_reward.append({'avg': log.get('avg_reward'),
+                            'min': log.get('min_reward'),
+                            'max': log.get('max_reward'),
+                            })
+        hist_maxheight.append(log.get('max_height'))
+        hist_pos.append(log.get('hist_pos'))
 
         if i_iter % args.log_interval == 0:
             pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')

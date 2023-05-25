@@ -37,7 +37,7 @@ parser.add_argument('--num-threads', type=int, default=1, metavar='N',
                     help='number of threads for agent (default: 4)')
 parser.add_argument('--seed', type=int, default=333, metavar='N',
                     help='random seed (default: 1)')
-parser.add_argument('--min-batch-size', type=int, default=512, metavar='N',
+parser.add_argument('--min-batch-size', type=int, default=128, metavar='N',
                     help='minimal batch size per A2C update (default: 2048)')
 parser.add_argument('--eval-batch-size', type=int, default=32, metavar='N',
                     help='minimal batch size for evaluation (default: 2048)')
@@ -135,7 +135,7 @@ def main_loop():
             #     i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
 
         if args.save_model_interval > 0 and (i_iter+1) % args.save_model_interval == 0:
-            breakpoint()
+            #breakpoint()
             to_device(torch.device('cpu'), policy_net, value_net)
             pickle.dump((policy_net, value_net, running_state),
                         open(os.path.join(DATA_PATH, 'learned_models/{}_a2c{}.p'.format("Assembly" , i_iter)), 'wb'))

@@ -22,10 +22,10 @@ HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 32
+min_batch_size = 128
 eval_batch_size = 32
 max_iter_num = 2000
-log_interval = 8
+log_interval = 16
 
 parser = argparse.ArgumentParser(description='PyTorch A2C example')
 parser.add_argument('--log-std', type=float, default=-0.0, metavar='G',
@@ -80,8 +80,6 @@ def update_params(batch):
     actions = torch.from_numpy(np.stack(batch.action)).to(dtype).to(device)
     rewards = torch.from_numpy(np.stack(batch.reward)).to(dtype).to(device)
     masks = torch.from_numpy(np.stack(batch.mask)).to(dtype).to(device)
-    print("Rewards: ")
-    print(rewards)
 
     with torch.no_grad():
         values = value_net(states)
@@ -119,13 +117,16 @@ def main():
             pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')
             pd.Series(hist_maxheight).to_csv(DATA_PATH + 'height.csv', mode='a')
             pd.Series(hist_pos).to_csv(DATA_PATH + 'pose.csv', mode='a')
+            hist_reward = []
+            hist_maxheight = []
+            hist_pos = []
 
-        #     """evaluate with determinstic action (remove noise for exploration)"""
-        #     _, log_eval = agent.collect_samples(eval_batch_size, mean_action=True)
-        #     t2 = time.time()
+            """evaluate with determinstic action (remove noise for exploration)"""
+            _, log_eval = agent.collect_samples(eval_batch_size, mean_action=True)
+            t2 = time.time()
 
-        #     print('{}\tT_sample {:.4f}\tT_update {:.4f}\tT_eval {:.4f}\ttrain_R_min {:.2f}\ttrain_R_max {:.2f}\ttrain_R_avg {:.2f}\teval_R_avg {:.2f}'.format(
-        #         i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
+            print('{}\tT_sample {:.4f}\tT_update {:.4f}\tT_eval {:.4f}\ttrain_R_min {:.2f}\ttrain_R_max {:.2f}\ttrain_R_avg {:.2f}\teval_R_avg {:.2f}'.format(
+                i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
 
         # if save_model_interval > 0 and (i_iter+1) % save_model_interval == 0:
         #     to_device(torch.device('cpu'), policy_net, value_net)

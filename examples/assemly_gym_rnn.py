@@ -22,7 +22,7 @@ HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 128
+min_batch_size = 64
 eval_batch_size = 32
 max_iter_num = 2000
 log_interval = 4

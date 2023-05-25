@@ -126,7 +126,6 @@ def main():
 
         """generate multiple trajectories that reach the minimum batch_size"""
         batch, log = agent.collect_samples(min_batch_size, render=False)
-        breakpoint()
         
         t0 = time.time()
         update_params(batch)

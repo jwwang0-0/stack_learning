@@ -26,10 +26,9 @@ class RnnPolicyNet(nn.Module):
                            bidirectional=False)
 
         self.action_mean = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, self.linear_dim), 
-            nn.Tanh(),
-            nn.Linear(self.linear_dim, action_dim),
-            nn.Tanh(),
+            nn.Linear(self.rnn_feature_dim, 1), 
+            # nn.Linear(self.linear_dim, action_dim),
+            # nn.Tanh(),
             )
         
         # self.action_mean.weight.data.mul_(0.1)
@@ -59,9 +58,11 @@ class RnnPolicyNet(nn.Module):
 
         else:
             out, hidden = self.rnn(batch_seq)
-            out = out[0][-1].view(1, 1 , 1, -1)
+            out = out[0][-1].view(1, 1, 1, -1)
 
         action_mean = self.action_mean(out)
+        action_mean = torch.tanh(action_mean)
+
         action_log_std = self.action_log_std.expand_as(action_mean)
         action_std = torch.exp(action_log_std)
 

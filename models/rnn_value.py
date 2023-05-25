@@ -26,10 +26,9 @@ class RnnValueNet(nn.Module):
                            bidirectional=False)
 
         self.value_head = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, self.linear_dim), 
-            nn.Tanh(),
-            nn.Linear(self.linear_dim, 1),
-            nn.Tanh(),
+            nn.Linear(self.rnn_feature_dim, 1), 
+            # nn.Tanh(),
+            # nn.Linear(self.linear_dim, 1),
             )
         
 
@@ -52,6 +51,7 @@ class RnnValueNet(nn.Module):
                            for idx, item in enumerate(out)])
 
         value = self.value_head(out)
+        value = torch.tanh(value)
 
         return value
 

@@ -16,19 +16,20 @@ import assembly_gymenv
 
 import pandas as pd
 import numpy as np
+from torch.nn.functional import normalize as t_norm
 
 
 HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 128
+min_batch_size = 32
 eval_batch_size = 16
 max_iter_num = 2000
-log_interval = 4
+log_interval = 8
 
 parser = argparse.ArgumentParser(description='PyTorch A2C example')
-parser.add_argument('--log-std', type=float, default=-2, metavar='G',
+parser.add_argument('--log-std', type=float, default=-1, metavar='G',
                     help='log std for the policy (default: -0.0)')
 parser.add_argument('--gamma', type=float, default=0.9, metavar='G',
                     help='discount factor (default: 0.99)')
@@ -63,13 +64,13 @@ running_state = None
 """define actor and critic"""
 # combine the policy and value net into one
 policy_net = RnnPolicyNet(env.action_space.shape[0], log_std=args.log_std)
-value_net = RnnValueNet(env.action_space.shape[0])
+value_net = RnnValueNet()
 
 policy_net.to(device)
 value_net.to(device)
 
-optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.001)
-optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.001)
+optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=0.001)
+optimizer_value = torch.optim.Adam(value_net.parameters(), lr=0.001)
 
 # optimization epoch number and batch size for PPO
 optim_epochs = 10
@@ -145,6 +146,7 @@ def main():
             hist_reward = []
             hist_maxheight = []
             hist_pos = []
+            # breakpoint()
 
             """evaluate with determinstic action (remove noise for exploration)"""
             _, log_eval = agent.collect_samples(eval_batch_size, mean_action=True)

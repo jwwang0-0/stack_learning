@@ -16,19 +16,23 @@ class RnnPolicyNet(nn.Module):
         elif activation == 'sigmoid':
             self.activation = torch.sigmoid
 
-        self.rnn_feature_dim = 8
-        self.linear_dim = 4
+        self.rnn_feature_dim = 32
+        self.linear_dim = 16
 
-        self.rnn = nn.LSTM(input_size=2, 
+        self.rnn = nn.RNN(input_size=2, 
                            hidden_size=self.rnn_feature_dim,
-                           num_layers=1,
+                           num_layers=2,
+                           nonlinearity='tanh',
+                           dropout=0.4,
                            batch_first=True,
                            bidirectional=False)
 
         self.action_mean = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, action_dim), 
-            # nn.ReLU(),
-            # nn.Linear(self.linear_dim, action_dim),
+            nn.Linear(self.rnn_feature_dim, self.linear_dim), 
+            nn.Tanh(),
+            nn.Linear(self.linear_dim, self.linear_dim),
+            nn.Tanh(),
+            nn.Linear(self.linear_dim, action_dim),
             )
         
         # self.action_mean.weight.data.mul_(0.1)

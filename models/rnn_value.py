@@ -5,7 +5,7 @@ from utils.math import *
 
 
 class RnnValueNet(nn.Module):
-    def __init__(self, action_dim, activation='tanh'):
+    def __init__(self, activation='tanh'):
         super().__init__()
 
         self.is_disc_action = False
@@ -16,19 +16,23 @@ class RnnValueNet(nn.Module):
         elif activation == 'sigmoid':
             self.activation = torch.sigmoid
 
-        self.rnn_feature_dim = 8
-        self.linear_dim = 4
+        self.rnn_feature_dim = 32
+        self.linear_dim = 16
 
-        self.rnn = nn.LSTM(input_size=2, 
+        self.rnn = nn.RNN(input_size=2, 
                            hidden_size=self.rnn_feature_dim,
-                           num_layers=1,
+                           num_layers=2,
+                           nonlinearity='tanh',
+                           dropout=0.4,
                            batch_first=True,
                            bidirectional=False)
 
         self.value_head = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, action_dim), 
-            # nn.ReLU(),
-            # nn.Linear(self.linear_dim, 1),
+            nn.Linear(self.rnn_feature_dim, self.linear_dim), 
+            nn.Tanh(),
+            nn.Linear(self.linear_dim, self.linear_dim),
+            nn.Tanh(),
+            nn.Linear(self.linear_dim, 1),
             )
         
 
@@ -51,7 +55,7 @@ class RnnValueNet(nn.Module):
                            for idx, item in enumerate(out)])
 
         value = self.value_head(out)
-        value = torch.tanh(value)
+        # value = torch.tanh(value)
 
         return value
 

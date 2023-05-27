@@ -71,6 +71,11 @@ def collect_samples(pid, queue, env, policy, custom_reward,
                 hist_maxheight.append(max_height)
                 max_height = 0
                 hist_pose.append(episode_pose)
+                if mean_action:
+                    print('Episode pos: ')
+                    print(" "*7 + 'Target: ' + str(np.round(env.target[0],3)))
+                    for item in episode_pose:
+                        print(" "*15+"{0:<20}".format(str(item)))
                 episode_pose = []
 
             if done:

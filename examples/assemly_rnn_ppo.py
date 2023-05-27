@@ -23,7 +23,7 @@ HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 512
+# min_batch_size = 512
 eval_batch_size = 16
 max_iter_num = 2000
 log_interval = 1
@@ -35,8 +35,12 @@ parser.add_argument('--hidden-n', type=int, default=64, metavar='G',
                     help='number of hidden neurons in RNN (default: 64)')
 parser.add_argument('--hidden-l', type=int, default=2, metavar='G',
                     help='number of hidden layers in RNN (default: 2)')
-parser.add_argument('--gamma', type=float, default=1, metavar='G',
+parser.add_argument('--gamma', type=float, default=0.9, metavar='G',
                     help='discount factor (default: 0.99)')
+parser.add_argument('--num-threads', type=int, default=4, metavar='N',
+                    help='number of threads for agent (default: 4)')
+parser.add_argument('--min-batch-size', type=int, default=2048, metavar='N',
+                    help='minimal batch size per A2C update (default: 2048)')
 parser.add_argument('--tau', type=float, default=0.95, metavar='G',
                     help='gae (default: 0.95)')
 parser.add_argument('--l2-reg', type=float, default=1e-3, metavar='G',
@@ -77,15 +81,15 @@ value_net = RnnValueNet(hidden_n=args.hidden_n,
 policy_net.to(device)
 value_net.to(device)
 
-optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.003)
-optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.003)
+optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=0.001)
+optimizer_value = torch.optim.Adam(value_net.parameters(), lr=0.001)
 
 # optimization epoch number and batch size for PPO
-optim_epochs = 10
-optim_batch_size = 128
+optim_epochs = 1
+optim_batch_size = args.min_batch_size
 
 """create agent"""
-agent = Agent(env, policy_net, device, running_state=running_state, num_threads=1)
+agent = Agent(env, policy_net, device, running_state=running_state, num_threads=args.num_threads)
 
 
 def update_params(batch):
@@ -134,7 +138,7 @@ def main():
     for i_iter in range(max_iter_num):
 
         """generate multiple trajectories that reach the minimum batch_size"""
-        batch, log = agent.collect_samples(min_batch_size, render=False)
+        batch, log = agent.collect_samples(args.min_batch_size, render=False)
         
         t0 = time.time()
         update_params(batch)

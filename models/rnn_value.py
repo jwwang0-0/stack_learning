@@ -23,12 +23,13 @@ class RnnValueNet(nn.Module):
                            hidden_size=self.rnn_feature_dim,
                            num_layers=hidden_l,
                            nonlinearity='tanh',
+                           bias=False,
                            dropout=0.2,
                            batch_first=True,
                            bidirectional=False)
 
         self.value_head = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, 1), 
+            nn.Linear(self.rnn_feature_dim, 1, bias=False), 
             # nn.Tanh(),
             # nn.Linear(self.linear_dim, self.linear_dim),
             # nn.Tanh(),

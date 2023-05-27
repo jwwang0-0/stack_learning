@@ -23,15 +23,19 @@ HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
-min_batch_size = 32
+min_batch_size = 512
 eval_batch_size = 16
 max_iter_num = 2000
-log_interval = 8
+log_interval = 1
 
 parser = argparse.ArgumentParser(description='PyTorch A2C example')
-parser.add_argument('--log-std', type=float, default=-1, metavar='G',
+parser.add_argument('--log-std', type=float, default=-2, metavar='G',
                     help='log std for the policy (default: -0.0)')
-parser.add_argument('--gamma', type=float, default=0.9, metavar='G',
+parser.add_argument('--hidden-n', type=int, default=64, metavar='G',
+                    help='number of hidden neurons in RNN (default: 64)')
+parser.add_argument('--hidden-l', type=int, default=2, metavar='G',
+                    help='number of hidden layers in RNN (default: 2)')
+parser.add_argument('--gamma', type=float, default=1, metavar='G',
                     help='discount factor (default: 0.99)')
 parser.add_argument('--tau', type=float, default=0.95, metavar='G',
                     help='gae (default: 0.95)')
@@ -63,18 +67,22 @@ running_state = None
 
 """define actor and critic"""
 # combine the policy and value net into one
-policy_net = RnnPolicyNet(env.action_space.shape[0], log_std=args.log_std)
-value_net = RnnValueNet()
+policy_net = RnnPolicyNet(env.action_space.shape[0], 
+                          hidden_n=args.hidden_n, 
+                          hidden_l=args.hidden_l,
+                          log_std=args.log_std)
+value_net = RnnValueNet(hidden_n=args.hidden_n, 
+                        hidden_l=args.hidden_l)
 
 policy_net.to(device)
 value_net.to(device)
 
-optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=0.001)
-optimizer_value = torch.optim.Adam(value_net.parameters(), lr=0.001)
+optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.003)
+optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.003)
 
 # optimization epoch number and batch size for PPO
 optim_epochs = 10
-optim_batch_size = 64
+optim_batch_size = 128
 
 """create agent"""
 agent = Agent(env, policy_net, device, running_state=running_state, num_threads=1)
@@ -87,8 +95,8 @@ def update_params(batch):
     actions = torch.from_numpy(np.stack(batch.action)).to(dtype).to(device)
     rewards = torch.from_numpy(np.stack(batch.reward)).to(dtype).to(device)
     masks = torch.from_numpy(np.stack(batch.mask)).to(dtype).to(device)
-    print("Rewards: ")
-    print(rewards)
+    # print("Rewards: ")
+    # print(rewards)
 
     with torch.no_grad():
         values = value_net(states)
@@ -140,14 +148,15 @@ def main():
         hist_pos.append(log.get('hist_pos'))
 
         if i_iter % log_interval == 0:
-            pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')
-            pd.Series(hist_maxheight).to_csv(DATA_PATH + 'height.csv', mode='a')
-            pd.Series(hist_pos).to_csv(DATA_PATH + 'pose.csv', mode='a')
-            hist_reward = []
-            hist_maxheight = []
-            hist_pos = []
+            # pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')
+            # pd.Series(hist_maxheight).to_csv(DATA_PATH + 'height.csv', mode='a')
+            # pd.Series(hist_pos).to_csv(DATA_PATH + 'pose.csv', mode='a')
+            # hist_reward = []
+            # hist_maxheight = []
+            # hist_pos = []
             # breakpoint()
 
+            print(''.join(['=']*40) + ' Evaluation '+ ''.join(['=']*40))
             """evaluate with determinstic action (remove noise for exploration)"""
             _, log_eval = agent.collect_samples(eval_batch_size, mean_action=True)
             t2 = time.time()

@@ -4,7 +4,7 @@ from utils.math import *
 
 
 
-class RnnPolicyNet(nn.Module):
+class RnnNet(nn.Module):
     def __init__(self, action_dim, activation='tanh', log_std=0, hidden_n=64, hidden_l=2):
         super().__init__()
 
@@ -17,7 +17,7 @@ class RnnPolicyNet(nn.Module):
             self.activation = torch.sigmoid
 
         self.rnn_feature_dim = hidden_n
-        self.linear_dim = 16
+        self.linear_dim = hidden_n
 
         self.rnn = nn.RNN(input_size=2, 
                            hidden_size=self.rnn_feature_dim,
@@ -27,12 +27,20 @@ class RnnPolicyNet(nn.Module):
                            batch_first=True,
                            bidirectional=False)
 
-        self.action_mean = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, action_dim), 
+        self.value_head = nn.Sequential(
+            nn.Linear(self.rnn_feature_dim, 1), 
             # nn.Tanh(),
             # nn.Linear(self.linear_dim, self.linear_dim),
             # nn.Tanh(),
-            # nn.Linear(self.linear_dim, action_dim),
+            # nn.Linear(self.linear_dim, 1),
+            )
+
+        self.action_mean = nn.Sequential(
+            nn.Linear(self.rnn_feature_dim, self.linear_dim), 
+            nn.Tanh(),
+            nn.Linear(self.linear_dim, self.linear_dim/2),
+            nn.Tanh(),
+            nn.Linear(self.linear_dim/2, action_dim),
             )
         
         # self.action_mean.weight.data.mul_(0.1)
@@ -70,15 +78,18 @@ class RnnPolicyNet(nn.Module):
         action_log_std = self.action_log_std.expand_as(action_mean)
         action_std = torch.exp(action_log_std)
 
-        return action_mean, action_log_std, action_std
+        value = self.value_head(out)
+        value = torch.tanh(value)
+
+        return value, action_mean, action_log_std, action_std
 
     def select_action(self, x):
-        action_mean, _, action_std = self.forward(x)
+        _, action_mean, _, action_std = self.forward(x)
         action = torch.normal(action_mean, action_std)
         return action
 
-    def get_log_prob(self, x, actions):
-        action_mean, action_log_std, action_std = self.forward(x)
+    def get_logprob_plusvalue(self, x, actions):
+        value, action_mean, action_log_std, action_std = self.forward(x)
         return normal_log_density(actions, action_mean, action_log_std, action_std)
 
 

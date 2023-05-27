@@ -23,5 +23,5 @@ def ppo_step(policy_net, value_net, optimizer_policy, optimizer_value, optim_val
     policy_surr = -torch.min(surr1, surr2).mean()
     optimizer_policy.zero_grad()
     policy_surr.backward()
-    torch.nn.utils.clip_grad_norm_(policy_net.parameters(), 40)
+    # torch.nn.utils.clip_grad_norm_(policy_net.parameters(), 40)
     optimizer_policy.step()

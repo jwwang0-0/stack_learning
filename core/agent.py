@@ -6,6 +6,10 @@ import time
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
 
+from contextlib import redirect_stdout
+HERE = os.path.dirname(__file__)
+LOG_PATH = os.path.join(HERE, "../", "data/")
+
 
 def collect_samples(pid, queue, env, policy, custom_reward,
                     mean_action, render, running_state, min_batch_size):
@@ -72,10 +76,12 @@ def collect_samples(pid, queue, env, policy, custom_reward,
                 max_height = 0
                 hist_pose.append(episode_pose)
                 if mean_action:
-                    print('Episode pos: ')
-                    print(" "*7 + 'Target: ' + str(np.round(env.target[0],3)))
-                    for item in episode_pose:
-                        print(" "*15+"{0:<20}".format(str(item)))
+                    with open(LOG_PATH+'log.txt', 'a') as f:
+                        with redirect_stdout(f):
+                            print('{0:>15}'.format('Target pos: ') + str(np.round(env.target[0],3)))
+                            print('{0:>15}'.format('Episode pos: '))
+                            for item in episode_pose:
+                                print(" "*15+"{0:<20}".format(str(item)))
                 episode_pose = []
 
             if done:

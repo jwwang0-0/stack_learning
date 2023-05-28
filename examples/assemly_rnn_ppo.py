@@ -18,28 +18,31 @@ import pandas as pd
 import numpy as np
 from torch.nn.functional import normalize as t_norm
 
+from contextlib import redirect_stdout
+HERE = os.path.dirname(__file__)
+LOG_PATH = os.path.join(HERE, "../", "data/")
 
 HERE = os.path.dirname(__file__)
 DATA_PATH = os.path.join(HERE, "../", "data/")
 
 
 # min_batch_size = 512
-eval_batch_size = 16
+eval_batch_size = 4
 max_iter_num = 2000
 log_interval = 1
 
 parser = argparse.ArgumentParser(description='PyTorch A2C example')
-parser.add_argument('--log-std', type=float, default=-2, metavar='G',
+parser.add_argument('--log-std', type=float, default=-1, metavar='G',
                     help='log std for the policy (default: -0.0)')
 parser.add_argument('--hidden-n', type=int, default=64, metavar='G',
                     help='number of hidden neurons in RNN (default: 64)')
 parser.add_argument('--hidden-l', type=int, default=2, metavar='G',
                     help='number of hidden layers in RNN (default: 2)')
-parser.add_argument('--gamma', type=float, default=0.9, metavar='G',
+parser.add_argument('--gamma', type=float, default=1, metavar='G',
                     help='discount factor (default: 0.99)')
 parser.add_argument('--num-threads', type=int, default=4, metavar='N',
                     help='number of threads for agent (default: 4)')
-parser.add_argument('--min-batch-size', type=int, default=2048, metavar='N',
+parser.add_argument('--min-batch-size', type=int, default=1024, metavar='N',
                     help='minimal batch size per A2C update (default: 2048)')
 parser.add_argument('--tau', type=float, default=0.95, metavar='G',
                     help='gae (default: 0.95)')
@@ -81,8 +84,8 @@ value_net = RnnValueNet(hidden_n=args.hidden_n,
 policy_net.to(device)
 value_net.to(device)
 
-optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=0.001)
-optimizer_value = torch.optim.Adam(value_net.parameters(), lr=0.001)
+optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.002, momentum=0.5)
+optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.002, momentum=0.5)
 
 # optimization epoch number and batch size for PPO
 optim_epochs = 1
@@ -158,15 +161,19 @@ def main():
             # hist_reward = []
             # hist_maxheight = []
             # hist_pos = []
-            # breakpoint()
 
-            print(''.join(['=']*40) + ' Evaluation '+ ''.join(['=']*40))
+            with open(LOG_PATH+'log.txt', 'a') as f:
+                with redirect_stdout(f):
+                    print(''.join(['=']*40) + ' Evaluation '+ ''.join(['=']*40))
             """evaluate with determinstic action (remove noise for exploration)"""
             _, log_eval = agent.collect_samples(eval_batch_size, mean_action=True)
             t2 = time.time()
 
             print('{}\tT_sample {:.4f}\tT_update {:.4f}\tT_eval {:.4f}\ttrain_R_min {:.2f}\ttrain_R_max {:.2f}\ttrain_R_avg {:.2f}\teval_R_avg {:.2f}'.format(
                 i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
+
+        if i_iter >= 30:
+            breakpoint()
 
         # if save_model_interval > 0 and (i_iter+1) % save_model_interval == 0:
         #     to_device(torch.device('cpu'), policy_net, value_net)

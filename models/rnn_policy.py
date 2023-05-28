@@ -9,12 +9,6 @@ class RnnPolicyNet(nn.Module):
         super().__init__()
 
         self.is_disc_action = False
-        if activation == 'tanh':
-            self.activation = torch.tanh
-        elif activation == 'relu':
-            self.activation = torch.relu
-        elif activation == 'sigmoid':
-            self.activation = torch.sigmoid
 
         self.rnn_feature_dim = hidden_n
         self.linear_dim = 16
@@ -22,18 +16,18 @@ class RnnPolicyNet(nn.Module):
         self.rnn = nn.RNN(input_size=2, 
                            hidden_size=self.rnn_feature_dim,
                            num_layers=hidden_l,
-                           nonlinearity='tanh',
+                        #    nonlinearity='tanh',
                            bias=False,
-                           dropout=0.2,
+                        #    dropout=0.2,
                            batch_first=True,
                            bidirectional=False)
 
         self.action_mean = nn.Sequential(
-            nn.Linear(self.rnn_feature_dim, action_dim, bias=False), 
-            # nn.Tanh(),
-            # nn.Linear(self.linear_dim, self.linear_dim),
-            # nn.Tanh(),
-            # nn.Linear(self.linear_dim, action_dim),
+            nn.Linear(self.rnn_feature_dim, self.rnn_feature_dim, bias=False), 
+            nn.Tanh(),
+            # # nn.Linear(self.linear_dim, self.linear_dim),
+            # # nn.ReLU(),
+            nn.Linear(self.rnn_feature_dim, action_dim, bias=True),
             )
         
         # self.action_mean.weight.data.mul_(0.1)

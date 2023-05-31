@@ -45,7 +45,6 @@ class CnnPolicyNet(nn.Module):
 
         x = self.cnn(arr_img)
         x = x.view(-1, 2*14*14)
-        x = self.linear(x)
 
         action_mean = self.action_mean(x)
         action_log_std = self.action_log_std.expand_as(action_mean)

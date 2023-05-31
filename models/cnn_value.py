@@ -43,7 +43,6 @@ class CnnValueNect(nn.Module):
 
         x = self.cnn(arr_img)
         x = x.view(-1, 2*14*14)
-        x = self.linear(x)
 
         value = self.value_head(x)
 

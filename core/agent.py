@@ -6,6 +6,10 @@ import time
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
 
+from contextlib import redirect_stdout
+HERE = os.path.dirname(__file__)
+LOG_PATH = os.path.join(HERE, "../", "data/")
+
 
 def collect_samples(pid, queue, env, policy, custom_reward,
                     mean_action, render, running_state, min_batch_size):
@@ -40,10 +44,12 @@ def collect_samples(pid, queue, env, policy, custom_reward,
             state_var = tensor(state).unsqueeze(0)
             with torch.no_grad():
                 if mean_action:
-                    action = policy(state_var)[0][0].numpy()
+                    action = policy(state_var)[0].flatten()
                 else:
-                    action = policy.select_action(state_var)[0].numpy()
-            action = int(action) if policy.is_disc_action else action.astype(np.float64)
+                    action = policy.select_action(state_var).flatten()
+            action = int(action) if policy.is_disc_action else action.numpy()
+            
+            # breakpoint()
             next_state, reward, done, info = env.step(action)
 
             reward_episode += reward
@@ -69,6 +75,13 @@ def collect_samples(pid, queue, env, policy, custom_reward,
                 hist_maxheight.append(max_height)
                 max_height = 0
                 hist_pose.append(episode_pose)
+                if mean_action:
+                    with open(LOG_PATH+'log.txt', 'a') as f:
+                        with redirect_stdout(f):
+                            print('{0:>15}'.format('Target pos: ') + str(np.round(env.target[0],3)))
+                            print('{0:>15}'.format('Episode pos: '))
+                            for item in episode_pose:
+                                print(" "*15+"{0:<20}".format(str(item)))
                 episode_pose = []
 
             if done:

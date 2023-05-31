@@ -85,7 +85,7 @@ optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=args.learning_ra
 optimizer_value = torch.optim.Adam(value_net.parameters(), lr=args.learning_rate)
 
 # optimization epoch number and batch size for PPO
-optim_epochs = 10
+optim_epochs = 1
 optim_batch_size = 64
 
 """create agent"""

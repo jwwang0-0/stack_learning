@@ -37,7 +37,7 @@ parser.add_argument('--num-threads', type=int, default=1, metavar='N',
                     help='number of threads for agent (default: 4)')
 parser.add_argument('--seed', type=int, default=333, metavar='N',
                     help='random seed (default: 1)')
-parser.add_argument('--min-batch-size', type=int, default=128, metavar='N',
+parser.add_argument('--min-batch-size', type=int, default=512, metavar='N',
                     help='minimal batch size per A2C update (default: 2048)')
 parser.add_argument('--eval-batch-size', type=int, default=32, metavar='N',
                     help='minimal batch size for evaluation (default: 2048)')
@@ -121,8 +121,8 @@ def main_loop():
         hist_pos.append(log.get('hist_pos'))
 
         """evaluate with determinstic action (remove noise for exploration)"""
-        # _, log_eval = agent.collect_samples(args.eval_batch_size, mean_action=True)
-        # t2 = time.time()
+        _, log_eval = agent.collect_samples(args.eval_batch_size, mean_action=True)
+        t2 = time.time()
 
         if i_iter % args.log_interval == 0:
             pd.DataFrame.from_records(hist_reward).to_csv(DATA_PATH + 'reward.csv', mode='a')
@@ -131,8 +131,8 @@ def main_loop():
             hist_reward = []
             hist_maxheight = []
             hist_pos = []
-            # print('{}\tT_sample {:.4f}\tT_update {:.4f}\tT_eval {:.4f}\ttrain_R_min {:.2f}\ttrain_R_max {:.2f}\ttrain_R_avg {:.2f}\teval_R_avg {:.2f}'.format(
-            #     i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
+            print('{}\tT_sample {:.4f}\tT_update {:.4f}\tT_eval {:.4f}\ttrain_R_min {:.2f}\ttrain_R_max {:.2f}\ttrain_R_avg {:.2f}\teval_R_avg {:.2f}'.format(
+                 i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
 
         if args.save_model_interval > 0 and (i_iter+1) % args.save_model_interval == 0:
             #breakpoint()

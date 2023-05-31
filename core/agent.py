@@ -40,7 +40,7 @@ def collect_samples(pid, queue, env, policy, custom_reward,
             state_var = tensor(state).unsqueeze(0)
             with torch.no_grad():
                 if mean_action:
-                    action = policy(state_var)[1][0].numpy()
+                    action = policy(state_var)[0][0].numpy()
                 else:
                     action = policy.select_action(state_var)[0].numpy()
             action = int(action) if policy.is_disc_action else action.astype(np.float64)

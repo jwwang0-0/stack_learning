@@ -5,8 +5,8 @@ from utils.math import *
 
 feature_dim = 32
 
-class BinaryCnnAC(nn.Module):
-    def __init__(self, action_dim, activation='sigmoid', log_std=0):
+class CnnValueNect(nn.Module):
+    def __init__(self,feature_dim=32, activation='sigmoid'):
         super().__init__()
 
         self.is_disc_action = False

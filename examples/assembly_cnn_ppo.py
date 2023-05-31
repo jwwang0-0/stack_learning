@@ -36,13 +36,13 @@ parser.add_argument('--log-std', type=float, default=-1, metavar='G',
                     help='log std for the policy (default: -0.0)')
 parser.add_argument('--hidden-n', type=int, default=64, metavar='G',
                     help='number of hidden neurons in RNN (default: 64)')
-parser.add_argument('--hidden-l', type=int, default=2, metavar='G',
-                    help='number of hidden layers in RNN (default: 2)')
+# parser.add_argument('--hidden-l', type=int, default=2, metavar='G',
+#                     help='number of hidden layers in RNN (default: 2)')
 parser.add_argument('--gamma', type=float, default=1, metavar='G',
                     help='discount factor (default: 0.99)')
 parser.add_argument('--num-threads', type=int, default=4, metavar='N',
                     help='number of threads for agent (default: 4)')
-parser.add_argument('--min-batch-size', type=int, default=1024, metavar='N',
+parser.add_argument('--min-batch-size', type=int, default=64, metavar='N',
                     help='minimal batch size per A2C update (default: 2048)')
 parser.add_argument('--tau', type=float, default=0.95, metavar='G',
                     help='gae (default: 0.95)')
@@ -170,8 +170,8 @@ def main():
             print('{}\tT_sample {:.4f}\tT_update {:.4f}\tT_eval {:.4f}\ttrain_R_min {:.2f}\ttrain_R_max {:.2f}\ttrain_R_avg {:.2f}\teval_R_avg {:.2f}'.format(
                 i_iter, log['sample_time'], t1-t0, t2-t1, log['min_reward'], log['max_reward'], log['avg_reward'], log_eval['avg_reward']))
 
-        if i_iter >= 30:
-            breakpoint()
+        # if i_iter >= 30:
+        #     breakpoint()
 
         # if save_model_interval > 0 and (i_iter+1) % save_model_interval == 0:
         #     to_device(torch.device('cpu'), policy_net, value_net)

@@ -82,8 +82,8 @@ value_net = CnnValueNect(feature_dim=args.hidden_n)
 policy_net.to(device)
 value_net.to(device)
 
-optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.002, momentum=0.5)
-optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.002, momentum=0.5)
+optimizer_policy = torch.optim.SGD(policy_net.parameters(), lr=0.001, momentum=0.5)
+optimizer_value = torch.optim.SGD(value_net.parameters(), lr=0.001, momentum=0.5)
 
 # optimization epoch number and batch size for PPO
 optim_epochs = 1
@@ -117,14 +117,13 @@ def update_params(batch):
         np.random.shuffle(perm)
         perm = LongTensor(perm).to(device)
 
-        perm_states = [states[idx] for idx in perm]
-        actions, returns, advantages, fixed_log_probs = \
-            actions[perm].clone(), returns[perm].clone(), advantages[perm].clone(), fixed_log_probs[perm].clone()
+        states, actions, returns, advantages, fixed_log_probs = \
+            states[perm].clone(), actions[perm].clone(), returns[perm].clone(), advantages[perm].clone(), fixed_log_probs[perm].clone()
 
         for i in range(optim_iter_num):
             ind = slice(i * optim_batch_size, min((i + 1) * optim_batch_size, len(states)))
             states_b, actions_b, advantages_b, returns_b, fixed_log_probs_b = \
-                perm_states[ind], actions[ind], advantages[ind], returns[ind], fixed_log_probs[ind]
+                states[ind], actions[ind], advantages[ind], returns[ind], fixed_log_probs[ind]
 
             ppo_step(policy_net, value_net, optimizer_policy, optimizer_value, 1, states_b, actions_b, returns_b,
                      advantages_b, fixed_log_probs_b, args.clip_epsilon, args.l2_reg)
